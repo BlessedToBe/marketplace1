@@ -1,0 +1,109 @@
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:80"
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+      - notification-service
+    networks:
+      - marketplace
+
+  user-service:
+    ports:
+      - "8081:80"
+    build: ./user-service
+    environment:
+      - DB_HOST=db-user
+      - DB_DATABASE=users
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+    depends_on:
+      - db-user
+    networks:
+      - marketplace
+
+  product-service:
+    build: ./product-service
+    environment:
+      - DB_HOST=db-product
+      - DB_DATABASE=products
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+    depends_on:
+      - db-product
+    networks:
+      - marketplace
+
+  order-service:
+    build: ./order-service
+    environment:
+      - DB_HOST=db-order
+      - DB_DATABASE=orders
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - db-order
+      - rabbitmq
+    networks:
+      - marketplace
+
+  notification-service:
+    build: ./notification-service
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    depends_on:
+      - rabbitmq
+    networks:
+      - marketplace
+
+  db-user:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: users
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - marketplace
+    ports:
+      - "33061:3306"
+
+  db-product:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: products
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - marketplace
+    ports:
+      - "33062:3306"
+
+  db-order:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: orders
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - marketplace
+    ports:
+      - "33063:3306"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - marketplace
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    networks:
+      - marketplace
+
+networks:
+  marketplace:
